@@ -1,0 +1,6 @@
+{
+  "name": "RentDirect - Direct Landlord Rental Marketplace",
+  "description": "Direct landlord-to-tenant long-term rental platform with direct contact, 360° virtual tours, video walk-throughs, custom filters, and viewing booking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
