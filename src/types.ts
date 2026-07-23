@@ -24,6 +24,23 @@ export type SecurityFeature =
   | 'Intercom System' 
   | 'Biometric Access';
 
+export type VerificationDocType = 'Ghana Card' | 'Passport' | 'Driver License';
+
+export interface LandlordVerification {
+  status: 'Unverified' | 'Pending' | 'Verified' | 'Rejected';
+  phoneVerified: boolean;
+  phone: string;
+  idType?: VerificationDocType;
+  idNumber?: string;
+  idFrontUrl?: string;
+  idBackUrl?: string;
+  selfieUrl?: string;
+  livenessPassed?: boolean;
+  submittedAt?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
+}
+
 export interface Landlord {
   id: string;
   name: string;
@@ -36,6 +53,7 @@ export interface Landlord {
   isVerified: boolean;
   memberSince: string;
   propertiesListedCount?: number;
+  verificationDetails?: LandlordVerification;
 }
 
 export interface Property {

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Home, Heart, CalendarCheck, PlusCircle, Scale, MapPin, Building2, LayoutGrid } from 'lucide-react';
+import { Home, Heart, CalendarCheck, PlusCircle, Scale, MapPin, Building2, LayoutGrid, ShieldCheck, UserCheck, LogOut, LogIn } from 'lucide-react';
+import { LandlordVerification, Landlord } from '../types';
 
 interface HeaderProps {
   savedCount: number;
@@ -14,6 +15,11 @@ interface HeaderProps {
   cities: string[];
   activeView: 'browse' | 'landlord';
   onNavigateView: (view: 'browse' | 'landlord') => void;
+  verification?: LandlordVerification;
+  onOpenVerificationModal?: () => void;
+  currentLandlord?: Landlord | null;
+  onOpenLandlordAuth?: () => void;
+  onSignOutLandlord?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,7 +34,12 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectCity,
   cities,
   activeView,
-  onNavigateView
+  onNavigateView,
+  verification,
+  onOpenVerificationModal,
+  currentLandlord,
+  onOpenLandlordAuth,
+  onSignOutLandlord
 }) => {
   return (
     <header id="main-header" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 shadow-xs">
@@ -79,6 +90,21 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Landlord Dashboard</span>
             </button>
           </div>
+
+          {/* Landlord Verification Badge Trigger */}
+          {activeView === 'landlord' && onOpenVerificationModal && (
+            <button
+              onClick={onOpenVerificationModal}
+              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                verification?.status === 'Verified'
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                  : 'bg-amber-50 text-amber-900 border-amber-300 animate-pulse'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>{verification?.status === 'Verified' ? 'Verified Landlord' : 'Get Verified Badge'}</span>
+            </button>
+          )}
 
           {/* Quick City Dropdown Selector (Only in browse mode) */}
           {activeView === 'browse' && (
@@ -157,6 +183,43 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </button>
             </>
+          )}
+
+          {/* Landlord Account / Sign In Badge */}
+          {currentLandlord ? (
+            <div className="flex items-center gap-2 bg-neutral-100 p-1 pl-2.5 rounded-xl border border-neutral-200">
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-emerald-600 text-white font-extrabold text-[10px] flex items-center justify-center">
+                  {currentLandlord.avatarUrl ? (
+                    <img src={currentLandlord.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    currentLandlord.name.charAt(0)
+                  )}
+                </div>
+                <div className="hidden lg:block text-left">
+                  <div className="text-xs font-extrabold text-neutral-900 leading-none">{currentLandlord.name.split(' ')[0]}</div>
+                  <div className="text-[9px] text-emerald-700 font-bold leading-none mt-0.5">Landlord</div>
+                </div>
+              </div>
+
+              {onSignOutLandlord && (
+                <button
+                  onClick={onSignOutLandlord}
+                  title="Sign Out Landlord"
+                  className="p-1 rounded-lg text-neutral-500 hover:text-rose-600 hover:bg-neutral-200 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={onOpenLandlordAuth}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Landlord Sign In / Register</span>
+            </button>
           )}
 
           {/* List Property CTA Button */}

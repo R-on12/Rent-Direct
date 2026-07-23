@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Property, FilterState, ViewingBooking, ContactInquiry } from './types';
+import { Property, FilterState, ViewingBooking, ContactInquiry, LandlordVerification, Landlord } from './types';
 import { INITIAL_PROPERTIES } from './data/mockProperties';
 import { Header } from './components/Header';
 import { PropertyCard } from './components/PropertyCard';
@@ -9,6 +9,8 @@ import { ViewingBookingModal } from './components/ViewingBookingModal';
 import { ListPropertyModal } from './components/ListPropertyModal';
 import { EditPropertyModal } from './components/EditPropertyModal';
 import { LandlordDashboard } from './components/LandlordDashboard';
+import { LandlordVerificationModal } from './components/LandlordVerificationModal';
+import { LandlordAuthModal } from './components/LandlordAuthModal';
 import { BookingsDrawer } from './components/BookingsDrawer';
 import { CompareModal } from './components/CompareModal';
 import { MapView } from './components/MapView';
@@ -170,6 +172,102 @@ export default function App() {
   const [isBookingsDrawerOpen, setIsBookingsDrawerOpen] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingViewAfterAuth, setPendingViewAfterAuth] = useState<'landlord' | 'upload' | null>(null);
+
+  // Landlord Authentication & Account State
+  const [currentLandlord, setCurrentLandlord] = useState<Landlord | null>(() => {
+    try {
+      const stored = localStorage.getItem('rentdirect_current_landlord');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Sync current landlord to localStorage
+  useEffect(() => {
+    if (currentLandlord) {
+      localStorage.setItem('rentdirect_current_landlord', JSON.stringify(currentLandlord));
+    } else {
+      localStorage.removeItem('rentdirect_current_landlord');
+    }
+  }, [currentLandlord]);
+
+  const handleLandlordLoginSuccess = (landlord: Landlord) => {
+    setCurrentLandlord(landlord);
+    if (pendingViewAfterAuth === 'landlord') {
+      setActiveView('landlord');
+    } else if (pendingViewAfterAuth === 'upload') {
+      setActiveView('landlord');
+      setIsListPropertyOpen(true);
+    }
+    setPendingViewAfterAuth(null);
+  };
+
+  const handleSignOutLandlord = () => {
+    setCurrentLandlord(null);
+    setActiveView('browse');
+  };
+
+  const handleNavigateView = (view: 'browse' | 'landlord') => {
+    if (view === 'landlord' && !currentLandlord) {
+      setPendingViewAfterAuth('landlord');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setActiveView(view);
+  };
+
+  const handleOpenListProperty = () => {
+    if (!currentLandlord) {
+      setPendingViewAfterAuth('upload');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsListPropertyOpen(true);
+  };
+
+  // Landlord Verification State
+  const [landlordVerification, setLandlordVerification] = useState<LandlordVerification>(() => {
+    try {
+      const stored = localStorage.getItem('rentdirect_landlord_verification');
+      return stored ? JSON.parse(stored) : {
+        status: 'Unverified',
+        phoneVerified: false,
+        phone: '+233 24 412 3890'
+      };
+    } catch {
+      return {
+        status: 'Unverified',
+        phoneVerified: false,
+        phone: '+233 24 412 3890'
+      };
+    }
+  });
+
+  // Sync landlord verification to localStorage
+  useEffect(() => {
+    localStorage.setItem('rentdirect_landlord_verification', JSON.stringify(landlordVerification));
+  }, [landlordVerification]);
+
+  const handleCompleteVerification = (updatedVerification: LandlordVerification) => {
+    setLandlordVerification(updatedVerification);
+    setIsVerificationModalOpen(false);
+
+    // Update all properties listed by landlord to reflect verified status
+    setProperties((prev) =>
+      prev.map((p) => ({
+        ...p,
+        landlord: {
+          ...p.landlord,
+          isVerified: true,
+          verificationDetails: updatedVerification
+        }
+      }))
+    );
+  };
 
   // Sync saved favorites to localStorage
   useEffect(() => {
@@ -387,12 +485,17 @@ export default function App() {
         }}
         onOpenBookings={() => setIsBookingsDrawerOpen(true)}
         onOpenCompare={() => setIsCompareModalOpen(true)}
-        onOpenListProperty={() => setIsListPropertyOpen(true)}
+        onOpenListProperty={handleOpenListProperty}
         selectedCity={filters.city}
         onSelectCity={(c) => setFilters({ ...filters, city: c })}
         cities={availableCities}
         activeView={activeView}
-        onNavigateView={(v) => setActiveView(v)}
+        onNavigateView={handleNavigateView}
+        verification={landlordVerification}
+        onOpenVerificationModal={() => setIsVerificationModalOpen(true)}
+        currentLandlord={currentLandlord}
+        onOpenLandlordAuth={() => setIsAuthModalOpen(true)}
+        onSignOutLandlord={handleSignOutLandlord}
       />
 
       {/* RENDER VIEW: Landlord Dashboard vs Marketplace Browse */}
@@ -401,13 +504,17 @@ export default function App() {
           properties={properties}
           viewingBookings={bookings}
           inquiries={inquiries}
-          onOpenUploadModal={() => setIsListPropertyOpen(true)}
+          verification={landlordVerification}
+          onOpenVerificationModal={() => setIsVerificationModalOpen(true)}
+          onOpenUploadModal={handleOpenListProperty}
           onEditProperty={(prop) => setEditingProperty(prop)}
           onDeleteProperty={handleDeleteProperty}
           onUpdatePropertyStatus={handleUpdatePropertyStatus}
           onUpdateBookingStatus={handleUpdateBookingStatus}
           onUpdateInquiryStatus={handleUpdateInquiryStatus}
           onSelectPropertyForDetails={(prop) => setSelectedPropertyForDetails(prop)}
+          currentLandlord={currentLandlord}
+          onSignOutLandlord={handleSignOutLandlord}
         />
       ) : (
         <>
@@ -736,6 +843,28 @@ export default function App() {
           onSelectProperty={(p) => setSelectedPropertyForDetails(p)}
         />
       )}
+
+      {/* Landlord Verification Portal Modal */}
+      {isVerificationModalOpen && (
+        <LandlordVerificationModal
+          currentVerification={landlordVerification}
+          landlordName={currentLandlord?.name || "Kwame Osei-Mensah"}
+          landlordPhone={currentLandlord?.phone || landlordVerification.phone || "+233 24 412 3890"}
+          onClose={() => setIsVerificationModalOpen(false)}
+          onCompleteVerification={handleCompleteVerification}
+        />
+      )}
+
+      {/* Landlord Sign Up / Register Auth Modal */}
+      <LandlordAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingViewAfterAuth(null);
+        }}
+        onLoginSuccess={handleLandlordLoginSuccess}
+        onStartVerificationNow={() => setIsVerificationModalOpen(true)}
+      />
 
     </div>
   );

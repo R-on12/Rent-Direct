@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Property, ViewingBooking, ContactInquiry } from '../types';
+import { Property, ViewingBooking, ContactInquiry, LandlordVerification, Landlord } from '../types';
 import { 
   PlusCircle, 
   Eye, 
@@ -22,13 +22,23 @@ import {
   ArrowRight,
   Filter,
   Search,
-  CheckCheck
+  CheckCheck,
+  ShieldCheck,
+  Award,
+  Smartphone,
+  FileText,
+  Camera,
+  AlertCircle,
+  LogOut,
+  UserCheck
 } from 'lucide-react';
 
 interface LandlordDashboardProps {
   properties: Property[];
   viewingBookings: ViewingBooking[];
   inquiries: ContactInquiry[];
+  verification?: LandlordVerification;
+  onOpenVerificationModal: () => void;
   onOpenUploadModal: () => void;
   onEditProperty: (property: Property) => void;
   onDeleteProperty: (propertyId: string) => void;
@@ -36,19 +46,25 @@ interface LandlordDashboardProps {
   onUpdateBookingStatus: (bookingId: string, status: 'Confirmed' | 'Pending' | 'Cancelled') => void;
   onUpdateInquiryStatus: (inquiryId: string, status: 'New' | 'Contacted' | 'Shortlisted' | 'Archived') => void;
   onSelectPropertyForDetails: (property: Property) => void;
+  currentLandlord?: Landlord | null;
+  onSignOutLandlord?: () => void;
 }
 
 export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
   properties,
   viewingBookings,
   inquiries,
+  verification,
+  onOpenVerificationModal,
   onOpenUploadModal,
   onEditProperty,
   onDeleteProperty,
   onUpdatePropertyStatus,
   onUpdateBookingStatus,
   onUpdateInquiryStatus,
-  onSelectPropertyForDetails
+  onSelectPropertyForDetails,
+  currentLandlord,
+  onSignOutLandlord
 }) => {
   const [activeTab, setActiveTab] = useState<'listings' | 'inquiries' | 'viewings'>('listings');
   const [propertyFilter, setPropertyFilter] = useState<'all' | 'Available' | 'Pending' | 'Rented'>('all');
@@ -85,23 +101,40 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Landlord Control Center
               </span>
-              <span className="text-xs text-neutral-400">Direct Rental Portal</span>
+              {currentLandlord && (
+                <span className="bg-white/10 text-white border border-white/20 px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-emerald-400" /> {currentLandlord.name}
+                </span>
+              )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Property Management Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              {currentLandlord ? `Welcome, ${currentLandlord.name.split(' ')[0]}!` : 'Property Management Dashboard'}
+            </h1>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-xl mt-1 font-medium">
               Manage your long-term rental listings in Ghana, review tenant inquiries, confirm viewing appointments, and track property views without agent fees.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            {onSignOutLandlord && (
+              <button
+                type="button"
+                onClick={onSignOutLandlord}
+                className="bg-white/10 hover:bg-white/20 text-neutral-200 border border-white/20 px-4 py-3 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-rose-400" />
+                <span>Sign Out Account</span>
+              </button>
+            )}
+
             <button
               id="dashboard-upload-btn"
               onClick={onOpenUploadModal}
-              className="bg-emerald-500 hover:bg-emerald-400 text-neutral-950 px-5 py-3 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="bg-emerald-500 hover:bg-emerald-400 text-neutral-950 px-5 py-3 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Upload New Property</span>
@@ -109,6 +142,77 @@ export const LandlordDashboard: React.FC<LandlordDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Verification Status Banner */}
+      {verification?.status === 'Verified' ? (
+        <div className="bg-emerald-950 text-white rounded-3xl p-5 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-500/40">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-extrabold text-white">Verified Landlord Status Active</span>
+                <span className="bg-emerald-500 text-neutral-950 font-extrabold text-[10px] px-2 py-0.5 rounded-full uppercase">
+                  100% Authenticated
+                </span>
+              </div>
+              <p className="text-xs text-emerald-200 mt-0.5 font-medium">
+                🪪 {verification.idType || 'Ghana Card'}: {verification.idNumber || 'GHA-712345678-9'} • 📱 Phone SMS Verified • 📷 Biometric Selfie Liveness Verified
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenVerificationModal}
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 shrink-0 transition-all cursor-pointer"
+          >
+            <Award className="w-4 h-4 text-emerald-400" />
+            <span>View Verified Certificate</span>
+          </button>
+        </div>
+      ) : (
+        <div className="bg-gradient-to-r from-emerald-50/80 via-amber-50/80 to-blue-50/80 bg-white rounded-3xl p-5 border-2 border-emerald-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs relative overflow-hidden">
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base font-extrabold text-neutral-900">
+                  Landlord Verification System — Stand Out & Build Tenant Trust
+                </h3>
+                <span className="bg-amber-500 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Recommended
+                </span>
+              </div>
+              <p className="text-xs text-neutral-600 max-w-2xl font-medium">
+                Get the official <strong>Verified Landlord Badge</strong> on all your rental properties by completing our 3-step verification process:
+              </p>
+              
+              <div className="flex items-center gap-3 pt-1.5 flex-wrap text-[11px] font-bold text-neutral-700">
+                <span className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs">
+                  <FileText className="w-3.5 h-3.5 text-blue-600" /> 1. National ID (Ghana Card / Passport)
+                </span>
+                <span className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs">
+                  <Camera className="w-3.5 h-3.5 text-purple-600" /> 2. Biometric Selfie & Liveness
+                </span>
+                <span className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs">
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-600" /> 3. Phone SMS Verification
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenVerificationModal}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl text-xs font-extrabold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 shrink-0 transition-all hover:scale-[1.02] cursor-pointer"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Verify ID & Get Verified Badge</span>
+          </button>
+        </div>
+      )}
 
       {/* Analytics KPI Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
