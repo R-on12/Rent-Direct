@@ -766,10 +766,10 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-6">
-            <button onClick={() => { setActiveView('browse'); setViewMode('grid'); }} className="hover:text-white">Find Rentals</button>
-            <button onClick={() => setActiveView('landlord')} className="hover:text-white">Landlord Dashboard</button>
-            <button onClick={() => setIsListPropertyOpen(true)} className="hover:text-white">List Your Property</button>
-            <button onClick={() => setIsBookingsDrawerOpen(true)} className="hover:text-white">My Viewing Bookings</button>
+            <button onClick={() => { setActiveView('browse'); setViewMode('grid'); }} className="hover:text-white cursor-pointer">Find Rentals</button>
+            <button onClick={() => handleNavigateView('landlord')} className="hover:text-white cursor-pointer font-bold text-emerald-400">Landlord Dashboard</button>
+            <button onClick={handleOpenListProperty} className="hover:text-white cursor-pointer">List Your Property</button>
+            <button onClick={() => setIsBookingsDrawerOpen(true)} className="hover:text-white cursor-pointer">My Viewing Bookings</button>
           </div>
 
           <div className="text-right text-[11px] text-neutral-500">
